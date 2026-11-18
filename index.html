@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I love you Leruo · Interactive Neon Heart</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000000;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', 'Arial', system-ui, sans-serif;
+      overflow: hidden; /* Prevents scrollbars from floating hearts */
+      position: relative;
+    }
+
+    /* --- FLOATING BACKGROUND HEARTS --- */
+    .bg-heart {
+      position: absolute;
+      bottom: -50px;
+      color: #ff1493;
+      text-shadow: 0 0 10px #ff1493, 0 0 20px #ff69b4;
+      font-size: 1.5rem;
+      opacity: 0;
+      animation: floatUp linear forwards;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-110vh) scale(1.2) rotate(360deg); opacity: 0; }
+    }
+
+    /* --- UI CONTROLS --- */
+    .controls {
+      position: relative;
+      z-index: 10;
+      margin-bottom: 30px;
+      text-align: center;
+      transition: opacity 0.5s ease;
+    }
+
+    .controls.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    h2 {
+      color: #fff;
+      text-shadow: 0 0 10px #ff1493;
+      margin-bottom: 15px;
+      font-weight: 400;
+      letter-spacing: 1px;
+    }
+
+    select {
+      appearance: none;
+      background: rgba(255, 20, 147, 0.1);
+      border: 2px solid #ff1493;
+      color: #ff1493;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      border-radius: 30px;
+      cursor: pointer;
+      outline: none;
+      text-shadow: 0 0 5px #ff1493;
+      box-shadow: 0 0 15px rgba(255, 20, 147, 0.3);
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    select:hover {
+      background: rgba(255, 20, 147, 0.2);
+      box-shadow: 0 0 25px rgba(255, 20, 147, 0.6);
+    }
+
+    select option {
+      background: #000;
+      color: #ff1493;
+    }
+
+    /* --- HEART CONTAINER --- */
+    .heart-container {
+      background: #000000;
+      display: none; /* Hidden until a language is chosen */
+      padding: 10px;
+      border-radius: 32px;
+      box-shadow: 0 0 30px rgba(255, 20, 147, 0.3);
+      position: relative;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .heart-container.show {
+      display: inline-block;
+      opacity: 1;
+    }
+
+    .heart-line {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      line-height: 1.25;
+      font-size: 1.1rem;
+      font-weight: 500;
+      white-space: nowrap;
+      margin-top: -2px;
+      /* Hidden initially for the build animation */
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .heart-line:first-child { margin-top: 0; }
+
+    /* Class added by JS to reveal the line */
+    .heart-line.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .love-text {
+      color: #ff1493;
+      text-shadow:
+        0 0 3px #fff,
+        0 0 8px #ff1493,
+        0 0 18px #ff1493,
+        0 0 30px #ff69b4,
+        0 0 50px #ff1493;
+      white-space: pre;
+      font-weight: 500;
+      margin: 0 2px;
+    }
+
+    /* Reset Button */
+    .reset-btn {
+      display: none;
+      margin-top: 30px;
+      background: transparent;
+      border: 1px solid #ff1493;
+      color: #ff1493;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      text-shadow: 0 0 5px #ff1493;
+      position: relative;
+      z-index: 10;
+    }
+    .reset-btn.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Controls -->
+  <div class="controls" id="controls">
+    <h2>Choose a language for Leruo</h2>
+    <select id="languageSelect">
+      <option value="" disabled selected>Select a language...</option>
+      <option value="english">English</option>
+      <option value="setswana">Setswana</option>
+      <option value="french">French</option>
+      <option value="spanish">Spanish</option>
+      <option value="italian">Italian</option>
+      <option value="japanese">Japanese</option>
+      <option value="korean">Korean</option>
+      <option value="greek">Greek</option>
+      <option value="arabic">Arabic</option>
+      <option value="german">German</option>
+      <option value="portuguese">Portuguese</option>
+      <option value="russian">Russian</option>
+      <option value="swedish">Swedish</option>
+      <option value="dutch">Dutch</option>
+      <option value="polish">Polish</option>
+      <option value="hindi">Hindi</option>
+      <option value="swahili">Swahili</option>
+      <option value="chinese">Chinese</option>
+      <option value="vietnamese">Vietnamese</option>
+      <option value="turkish">Turkish</option>
+    </select>
+  </div>
+
+  <!-- Heart Container -->
+  <div class="heart-container" id="heartContainer">
+    <!-- Lines will be generated by JavaScript -->
+  </div>
+
+  <!-- Reset Button -->
+  <button class="reset-btn" id="resetBtn">Choose another language</button>
+
+  <script>
+    // Dictionary of translations
+    const translations = {
+      english: "I love you Leruo",
+      setswana: "Ke a go rata Leruo",
+      french: "Je t'aime Leruo",
+      spanish: "Te amo Leruo",
+      italian: "Ti amo Leruo",
+      japanese: "愛してるレルオ",
+      korean: "사랑해 레루오",
+      greek: "Σ'αγαπώ Leruo",
+      arabic: "أحبك ليرو",
+      german: "Ich liebe dich Leruo",
+      portuguese: "Eu te amo Leruo",
+      russian: "Я тебя люблю Леруо",
+      swedish: "Jag älskar dig Leruo",
+      dutch: "Ik hou van jou Leruo",
+      polish: "Kocham cię Leruo",
+      hindi: "Main tumse pyar karta hoon Leruo",
+      swahili: "Nakupenda Leruo",
+      chinese: "我愛你 Leruo",
+      vietnamese: "Anh yêu em Leruo",
+      turkish: "Seni seviyorum Leruo"
+    };
+
+    // Heart shape map (defines how many phrases per line to form the heart)
+    const heartShape = [2, 3, 4, 3, 4, 4, 3, 2, 2, 2, 3];
+
+    const select = document.getElementById('languageSelect');
+    const controls = document.getElementById('controls');
+    const heartContainer = document.getElementById('heartContainer');
+    const resetBtn = document.getElementById('resetBtn');
+    
+    let buildTimeout;
+
+    // Handle selection change
+    select.addEventListener('change', (e) => {
+      const lang = e.target.value;
+      if (!lang) return;
+
+      const phrase = translations[lang];
+      
+      // 1. Hide controls
+      controls.classList.add('hide');
+      
+      // 2. Build the heart after a brief pause
+      setTimeout(() => {
+        buildHeart(phrase);
+      }, 400);
+    });
+
+    function buildHeart(phrase) {
+      // Clear previous heart
+      heartContainer.innerHTML = '';
+      heartContainer.classList.add('show');
+      
+      // Create the lines
+      heartShape.forEach((count, index) => {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'heart-line';
+        
+        // Add the phrase 'count' times for this line
+        for (let i = 0; i < count; i++) {
+          const span = document.createElement('span');
+          span.className = 'love-text';
+          // In the bottom line, add hearts around the text
+          if (index === heartShape.length - 1) {
+            if (i === 0) span.innerText = "❤️";
+            else if (i === count - 1) span.innerText = "❤️";
+            else span.innerText = phrase;
+          } else {
+            span.innerText = phrase;
+          }
+          lineDiv.appendChild(span);
+        }
+        
+        heartContainer.appendChild(lineDiv);
+      });
+
+      // 3. Animate the lines appearing one by one
+      const lines = document.querySelectorAll('.heart-line');
+      lines.forEach((line, index) => {
+        buildTimeout = setTimeout(() => {
+          line.classList.add('visible');
+        }, index * 150); // 150ms delay between each line
+      });
+
+      // 4. Show reset button after build finishes
+      setTimeout(() => {
+        resetBtn.classList.add('show');
+      }, (lines.length * 150) + 500);
+    }
+
+    // Handle reset
+    resetBtn.addEventListener('click', () => {
+      clearTimeout(buildTimeout);
+      
+      // Hide heart and reset button
+      heartContainer.classList.remove('show');
+      resetBtn.classList.remove('show');
+      
+      // Clear the generated HTML after fade out
+      setTimeout(() => {
+        heartContainer.innerHTML = '';
+        // Reset select dropdown
+        select.value = "";
+        // Show controls again
+        controls.classList.remove('hide');
+      }, 500);
+    });
+
+    // --- FLOATING HEARTS BACKGROUND ANIMATION ---
+    function createFloatingHeart() {
+      const heart = document.createElement('div');
+      heart.classList.add('bg-heart');
+      
+      // Randomly choose a heart emoji
+      const heartEmojis = ['❤️', '💖', '💘', '💝', '💗'];
+      heart.innerText = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+      
+      // Randomize position, size, and animation duration
+      const startX = Math.random() * 100; // 0 to 100vw
+      const size = Math.random() * 1.5 + 0.8; // 0.8rem to 2.3rem
+      const duration = Math.random() * 5 + 4; // 4s to 9s
+      
+      heart.style.left = `${startX}vw`;
+      heart.style.fontSize = `${size}rem`;
+      heart.style.animationDuration = `${duration}s`;
+      
+      // Add to body
+      document.body.appendChild(heart);
+      
+      // Remove heart from DOM after animation ends to prevent lag
+      setTimeout(() => {
+        heart.remove();
+      }, duration * 1000);
+    }
+
+    // Spawn a new heart every 400ms
+    setInterval(createFloatingHeart, 400);
+
+  </script>
+</body>
+</html>
